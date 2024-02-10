@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// adjust formatting with 255 thing or 999
-
 typedef struct
 {
     char book_id[1000];
@@ -35,7 +33,7 @@ int load_data(const char *filename, Book **books)
     int capacity = 10;
     *books = (Book *)malloc(capacity * sizeof(Book));
 
-    while (fscanf(file, "%999s\t%999[^\t]\t%999[^\n]", (*books)[count].book_id, (*books)[count].title, (*books)[count].author) == 3)
+    while (fscanf(file, "%s\t%[^\t]\t%[^\n]", (*books)[count].book_id, (*books)[count].title, (*books)[count].author) == 3)
     {
         count++;
         if (count >= capacity)
