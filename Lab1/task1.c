@@ -53,7 +53,7 @@ Book *search_by_id(Book *books, int count, char *id)
 {
     for (int i = 0; i < count; i++)
     {
-        if (books[i].book_id == id)
+        if (strcmp(books[i].book_id, id) == 0)
         {
             return &books[i];
         }
@@ -131,7 +131,7 @@ int main()
 
             while (1)
             {
-                // Temporarily store book information to check for the exit condition
+        
                 char temp_id[1000], temp_title[1000], temp_author[1000];
 
                 printf("Enter book ID, title, and author, or '.' to finish:\n");
@@ -139,25 +139,22 @@ int main()
                 scanf("%s", temp_id);
                 if (strcmp(temp_id, ".") == 0)
                 {
-                    break; // Exit without incrementing book_count or saving the last entry
+                    break; 
                 }
 
-                // Only proceed with storing the book data if it's not the exit condition
                 printf("Title: ");
-                scanf(" %[^\n]", temp_title); // Note the space before % to ensure leading whitespace is consumed
+                scanf(" %[^\n]", temp_title); 
                 printf("Author: ");
                 scanf(" %[^\n]", temp_author);
 
-                // Check for reallocation necessity and reallocate if needed
                 Book *temp_books = realloc(books, (book_count + 1) * sizeof(Book));
                 if (temp_books == NULL)
                 {
                     fprintf(stderr, "Memory reallocation failed.\n");
-                    break; // Exit the loop if memory allocation fails
+                    break; 
                 }
                 books = temp_books;
 
-                // Now it's safe to copy temp data into the books array
                 strcpy(books[book_count].book_id, temp_id);
                 strcpy(books[book_count].title, temp_title);
                 strcpy(books[book_count].author, temp_author);

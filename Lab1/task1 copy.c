@@ -174,6 +174,23 @@ int main()
 
         case 'c':
             system("clear");
+            free(books);
+            books = NULL;
+            book_count = 0;
+            printf("Enter the filename to load data from: ");
+            scanf("%s", filename);
+
+            book_count = load_data(filename, &books);
+            if (book_count == 0)
+            {
+                printf("No data loaded.\n");
+            }
+            else
+            {
+                print_books(books, book_count);
+            }
+
+            system("clear");
             printf("Enter book ID to search: ");
             scanf("%s", id);
             Book *book = search_by_id(books, book_count, id);
