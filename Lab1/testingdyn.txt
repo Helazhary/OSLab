@@ -1,4 +1,0 @@
-myid    mytitle myauthor
-mysecond	mysecondd	mysecondd
-third	thifff	thirfdd
-yer	yerr	yerrr
