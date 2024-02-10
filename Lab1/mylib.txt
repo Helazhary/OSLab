@@ -1,3 +1,0 @@
-id1	tit1	aut1
-id2	tit2	aut2
-id3	tit3	aut3
