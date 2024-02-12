@@ -2,82 +2,92 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct
-{
+typedef struct Book {
     char book_id[1000];
     char title[1000];
     char author[1000];
+    struct Book *next;
 } Book;
 
-void write_data(Book *books, int count, const char *filename)
-{
-    FILE *file = fopen(filename, "a");
-    for (int i = 0; i < count; i++)
-    {
-        fprintf(file, "%s\t%s\t%s\n", books[i].book_id, books[i].title, books[i].author);
+void write_data(Book *head, const char *filename) {
+    FILE *file = fopen(filename, "a"); //Im assuming that if the file is already created then the user can add more books to it
+    Book *current = head;
+    while (current != NULL) {
+        fprintf(file, "%s\t%s\t%s\n", current->book_id, current->title, current->author);
+        current = current->next;
     }
-
     fclose(file);
 }
 
-int load_data(const char *filename, Book **books)
-{
+int load_data(const char *filename, Book **head) {
     FILE *file = fopen(filename, "r");
-    if (file == NULL)
-    {
-        fprintf(stderr, "Error opening file for reading.\n");
+    if (file == NULL) {
+        printf("Error opening file for reading.\n");
         return 0;
     }
 
+    *head = NULL;
+    Book *last = NULL;
     int count = 0;
-    int capacity = 10;
-    *books = (Book *)malloc(capacity * sizeof(Book));
-
-    while (fscanf(file, "%s\t%[^\t]\t%[^\n]", (*books)[count].book_id, (*books)[count].title, (*books)[count].author) == 3)
-    {
-        count++;
-        if (count >= capacity)
-        {
-            capacity *= 2; // Double the capacity
-            *books = (Book *)realloc(*books, capacity * sizeof(Book));
+    while (1) {
+        Book *new_book = (Book *)malloc(sizeof(Book));
+        if (fscanf(file, "%s\t%[^\t]\t%[^\n]", new_book->book_id, new_book->title, new_book->author) != 3) {
+            free(new_book);
+            break;
         }
+        new_book->next = NULL;
+
+        if (*head == NULL) {
+            *head = new_book;
+        } else {
+            last->next = new_book;
+        }
+        last = new_book;
+        count++;
     }
 
     fclose(file);
     return count;
 }
 
-Book *search_by_id(Book *books, int count, char *id)
-{
-    for (int i = 0; i < count; i++)
-    {
-        if (strcmp(books[i].book_id, id) == 0)
-        {
-            return &books[i];
+Book *search_by_id(Book *head, char *id) {
+    Book *current = head;
+    while (current != NULL) {
+        if (strcmp(current->book_id, id) == 0) {
+            return current;
         }
+        current = current->next;
     }
     return NULL;
 }
 
-void print_books(Book *books, int count)
-{
+void print_books(Book *head) {
     printf("ID\tTitle\tAuthor\n");
-    for (int i = 0; i < count; i++)
-    {
-        printf("%s\t%s\t%s\n", books[i].book_id, books[i].title, books[i].author);
+    Book *current = head;
+    while (current != NULL) {
+        printf("%s\t%s\t%s\n", current->book_id, current->title, current->author);
+        current = current->next;
     }
 }
 
-int main()
-{
-    Book *books = NULL;
+void free_books(Book **head) {
+    Book *current = *head;
+    while (current != NULL) {
+        Book *temp = current;
+        current = current->next;
+        free(temp);
+    }
+    *head = NULL;
+}
+
+int main() {
+    Book *head = NULL;
     int book_count = 0;
     char filename[1000] = "";
     char option;
     char id[1000] = "";
 
-    do
-    {
+    do {
         printf("\nChoose an option:\n");
         printf("a) Load data\n");
         printf("b) Enter data\n");
@@ -85,117 +95,86 @@ int main()
         printf("d) Exit the program\n");
         scanf(" %c", &option);
 
-        switch (option)
-        {
+        switch (option) {
         case 'a':
             system("clear");
-            free(books);
-            books = NULL;
-            book_count = 0;
+            free_books(&head);
             printf("Enter the filename to load data from: ");
             scanf("%s", filename);
 
-            book_count = load_data(filename, &books);
-            if (book_count == 0)
-            {
+            book_count = load_data(filename, &head);
+            if (book_count == 0) {
                 printf("No data loaded.\n");
+            } else {
+                print_books(head);
             }
-            else
-            {
-                print_books(books, book_count);
-            }
-
             break;
         case 'b':
-
-            free(books);
-            books = NULL;
-            book_count = 0;
-
             printf("Enter the filename to save data to: ");
             scanf("%s", filename);
 
-            // Dynamically allocate memory for books if not already allocated
-            if (books == NULL)
-            {
-                books = (Book *)malloc(sizeof(Book)); // Initial allocation for 1 book
-                if (books == NULL)
-                {
-                    fprintf(stderr, "Memory allocation failed.\n");
-                    exit(1);
-                }
-                book_count = 0;
-            }
-
-            while (1)
-            {
-        
+            while (1) {
                 char temp_id[1000], temp_title[1000], temp_author[1000];
-
                 printf("Enter book ID, title, and author, or '.' to finish:\n");
                 printf("ID: ");
                 scanf("%s", temp_id);
-                if (strcmp(temp_id, ".") == 0)
-                {
+                if (strcmp(temp_id, ".") == 0) {
                     break; 
                 }
 
                 printf("Title: ");
-                scanf(" %[^\n]", temp_title); 
+                scanf(" %[^\n]", temp_title);
                 printf("Author: ");
-                scanf(" %[^\n]", temp_author);
+                scanf(" %[^\n]", temp_author); 
 
-                Book *temp_books = realloc(books, (book_count + 1) * sizeof(Book));
-                if (temp_books == NULL)
-                {
-                    fprintf(stderr, "Memory reallocation failed.\n");
-                    break; 
+                Book *new_book = (Book *)malloc(sizeof(Book));
+                if (new_book == NULL) {
+                    fprintf(stderr, "Erorr 4.\n");
+                    exit(4); 
                 }
-                books = temp_books;
+                strcpy(new_book->book_id, temp_id);
+                strcpy(new_book->title, temp_title);
+                strcpy(new_book->author, temp_author);
+                new_book->next = NULL;
 
-                strcpy(books[book_count].book_id, temp_id);
-                strcpy(books[book_count].title, temp_title);
-                strcpy(books[book_count].author, temp_author);
-
+                if (head == NULL) {
+                    head = new_book; 
+                } else {
+                    Book *current = head;
+                    while (current->next != NULL) {
+                        current = current->next;
+                    }
+                    current->next = new_book; 
+                }
                 book_count++;
             }
 
-            if (book_count > 0)
-            {
-                write_data(books, book_count, filename);
+            if (book_count > 0) {
+                write_data(head, filename);
             }
 
             break;
-
-        case 'c':
+                case 'c':
             system("clear");
-            free(books);
-            books = NULL;
-            book_count = 0;
+            free_books(&head);
             printf("Enter the filename to load data from: ");
             scanf("%s", filename);
 
-            book_count = load_data(filename, &books);
-            if (book_count == 0)
-            {
+            book_count = load_data(filename, &head);
+            if (book_count == 0) {
                 printf("No data loaded.\n");
-            }
-            else
-            {
-                print_books(books, book_count);
-            }
-
-            system("clear");
-            printf("Enter book ID to search: ");
-            scanf("%s", id);
-            Book *book = search_by_id(books, book_count, id);
-            if (book)
-            {
-                printf("Book found: ID = %s, Title = %s, Author = %s\n", book->book_id, book->title, book->author);
-            }
-            else
-            {
-                printf("No book found with ID %s\n", id);
+            } else {
+                print_books(head); 
+                printf("Enter book ID to search: ");
+                scanf("%s", id);
+                Book *book = search_by_id(head, id);
+                if (book) {
+                    system("clear");
+                    printf("Book found: ID = %s, Title = %s, Author = %s\n", book->book_id, book->title, book->author);
+                } else {
+                    system("clear");
+                    printf("No book found with ID %s\n", id);
+                }
             }
             break;
         case 'd':
@@ -208,5 +187,6 @@ int main()
         }
     } while (option != 'd');
 
+    free_books(&head);
     return 0;
 }
